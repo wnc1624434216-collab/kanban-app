@@ -3,11 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Project</title>
+  <title>看板應用 - Kanban App</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Hello, Git!</h1>
+  <div class="app-container">
+    <header>
+      <h1>📋 看板應用 (Kanban App)</h1>
+    </header>
+
+    <!-- 新增任務表單 -->
+    <section class="form-container">
+      <form id="task-form">
+        <div class="form-group">
+          <label for="task-title">任務內容</label>
+          <input type="text" id="task-title" placeholder="請輸入任務名稱..." required />
+        </div>
+        <div class="form-group">
+          <label for="task-due-date">截止日期 (可選填)</label>
+          <input type="date" id="task-due-date" />
+        </div>
+        <button type="submit" id="add-task-btn">新增任務</button>
+      </form>
+    </section>
+
+    <!-- 看板主體 -->
+    <main class="board">
+      <!-- 待處理 -->
+      <div class="column" data-status="todo">
+        <div class="column-header">
+          <h2>📌 待處理 (<span class="count" id="count-todo">0</span>)</h2>
+        </div>
+        <div class="task-list" id="list-todo" ondragover="event.preventDefault()"></div>
+      </div>
+
+      <!-- 進行中 -->
+      <div class="column" data-status="in-progress">
+        <div class="column-header">
+          <h2>⚡ 進行中 (<span class="count" id="count-in-progress">0</span>)</h2>
+        </div>
+        <div class="task-list" id="list-in-progress" ondragover="event.preventDefault()"></div>
+      </div>
+
+      <!-- 已完成 -->
+      <div class="column" data-status="done">
+        <div class="column-header">
+          <h2>✅ 已完成 (<span class="count" id="count-done">0</span>)</h2>
+        </div>
+        <div class="task-list" id="list-done" ondragover="event.preventDefault()"></div>
+      </div>
+    </main>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

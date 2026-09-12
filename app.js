@@ -83,7 +83,7 @@ function renderBoard() {
     card.addEventListener("dragstart", handleDragStart);
     card.addEventListener("dragend", handleDragEnd);
 
-    // 任務內容
+    // 任務內容（使用 textContent 防止 XSS）
     const content = document.createElement("div");
     content.className = "task-content";
     content.textContent = task.title;
@@ -121,6 +121,17 @@ function renderBoard() {
     list.appendChild(card);
   });
 
+  // 若欄位為空，顯示提示佔位元件
+  Object.keys(lists).forEach(status => {
+    const list = lists[status];
+    if (list && (!columnCounts[status] || columnCounts[status] === 0)) {
+      const placeholder = document.createElement("div");
+      placeholder.className = "empty-placeholder";
+      placeholder.textContent = "尚無任務，可拖曳卡片至此";
+      list.appendChild(placeholder);
+    }
+  });
+
   // 更新計數
   Object.keys(columnCounts).forEach(status => {
     if (counts[status]) {
@@ -129,17 +140,27 @@ function renderBoard() {
   });
 }
 
-// 新增任務
-document.getElementById("task-form").addEventListener("submit", e => {
-  e.preventDefault();
+// 新增任務表單監聽
+const taskForm = document.getElementById("task-form");
+const titleInput = document.getElementById("task-title");
+const dueDateInput = document.getElementById("task-due-date");
 
-  const titleInput = document.getElementById("task-title");
-  const dueDateInput = document.getElementById("task-due-date");
+// 清除輸入錯誤狀態
+titleInput.addEventListener("input", () => {
+  titleInput.setCustomValidity("");
+});
+
+taskForm.addEventListener("submit", e => {
+  e.preventDefault();
 
   const title = titleInput.value.trim();
   const dueDate = dueDateInput.value; // 若未選則為空字串 ""
 
-  if (!title) return;
+  if (!title) {
+    titleInput.setCustomValidity("請輸入有效的任務內容");
+    titleInput.reportValidity();
+    return;
+  }
 
   const newTask = {
     id: `task-${Date.now()}`,
@@ -152,9 +173,10 @@ document.getElementById("task-form").addEventListener("submit", e => {
   saveTasks();
   renderBoard();
 
-  // 清空表單
+  // 清空表單並自動聚焦
   titleInput.value = "";
   dueDateInput.value = "";
+  titleInput.focus();
 });
 
 // 刪除任務
@@ -176,6 +198,8 @@ function handleDragStart(e) {
 function handleDragEnd() {
   this.classList.remove("dragging");
   draggedTaskId = null;
+  // 移除所有欄位的拖曳高亮
+  document.querySelectorAll(".column").forEach(col => col.classList.remove("drag-over"));
 }
 
 // 欄位放置事件
@@ -183,10 +207,21 @@ document.querySelectorAll(".column").forEach(column => {
   column.addEventListener("dragover", e => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
+    if (draggedTaskId) {
+      column.classList.add("drag-over");
+    }
+  });
+
+  column.addEventListener("dragleave", function (e) {
+    // 只有在真正離開欄位容器時才移除樣式
+    if (!this.contains(e.relatedTarget)) {
+      this.classList.remove("drag-over");
+    }
   });
 
   column.addEventListener("drop", function (e) {
     e.preventDefault();
+    this.classList.remove("drag-over");
     const newStatus = this.dataset.status;
     if (draggedTaskId && newStatus) {
       const task = tasks.find(t => t.id === draggedTaskId);
@@ -201,7 +236,6 @@ document.querySelectorAll(".column").forEach(column => {
 
 // 初始化載入
 document.addEventListener("DOMContentLoaded", renderBoard);
-// 若 DOM 已經載入，直接執行一次以防萬一
 if (document.readyState === "complete" || document.readyState === "interactive") {
   renderBoard();
 }
